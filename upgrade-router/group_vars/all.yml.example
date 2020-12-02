@@ -1,0 +1,46 @@
+---
+
+images_folder: "{{ playbook_dir }}/software-images/"
+
+# should match:
+#   "network_os_platform": "LBB_320",  (= Product Name in "show product-info-area")
+#   "network_os_software_version": "ONEOS92-MULTI_FT-V5.2R1E6_FT1",    
+# For LBB: check "show soft-file <file>" to get the exact settings
+supported_os_versions:
+  PBXPLUG_401:
+    # * recommended
+    required_version: OneOS-pCPE-PPC_pi2-6.4.4m3  
+    required_file: OneOS-pCPE-PPC_pi2-6.4.4m3.ZZZ
+    #required_version: OneOS-pCPE-PPC_pi2-6.4.2m1
+    #required_file: OneOS-pCPE-PPC_pi2-6.4.2m1.ZZZ
+    #required_version: OneOS-pCPE-PPC_pi2-6.4.4
+    #required_file: OneOS-pCPE-PPC_pi2-6.4.4.ZZZ
+  PBXPLUG_212:
+    # * recommended
+    required_version: ONEOS9-MONO_FT-V5.2R2E11  
+    required_file: ONEOS9-MONO_FT-V5.2R2E11.ZZZ
+    #required_version: ONEOS9-MONO_FT-V5.2R2E7_HA3
+    #required_file: ONEOS9-MONO_FT-V5.2R2E7_HA3.ZZZ
+    #required_version: ONEOS9-MONO_FT-V5.2R2E7_HA6
+    #required_file: ONEOS9-MONO_FT-V5.2R2E7_HA6.ZZZ
+  LBB_320:
+    #required_version: ONEOS92-MULTI_FT-V5.2R1E6_FT1
+    #required_file: ONEOS92-MULTI_FT-V5.2R1E6_FT1.ZZZ
+    #required_version: ONEOS92-MULTI_FT-V5.2R1E2
+    #required_file: ONEOS92-MULTI_FT-V5.2R1E2.ZZZ
+    # * recommended for ddos
+    # ip inspect stateful
+    # ip ddos-control white-ip-list 91.208.220.0 255.255.255.0
+    required_version: ONEOS92-DUAL_FT-V5.2R2E7_HA8
+    required_file: ONEOS92-DUAL_FT-V5.2R2E7_HA8.ZZZ        
+  LBB_150:
+    required_version: OneOS-pCPE-ARM_pi1-6.2.2
+    required_file: OneOS-pCPE-ARM_pi1-6.2.2.ZZZ
+    #required_version: OneOS-pCPE-ARM_pi1-6.4.3m1
+    #required_file: OneOS-pCPE-ARM_pi1-6.4.3m1.ZZZ      
+  LBB_140:  
+    # * recommended for ddos
+    # ip inspect stateful
+    # ip ddos-control white-ip-list 91.208.220.0 255.255.255.0
+    required_version: ONEOS16-MONO_FT-V5.2R2E7_HA8
+    required_file: ONEOS16-MONO_FT-V5.2R2E7_HA8.ZZZ

@@ -1,0 +1,47 @@
+---
+
+### BLOCK: REBOOT AND CHECK IF UPGRADE WAS DONE SUCCESSFULLY
+
+- block:
+  
+  - name: reboot ios device
+    ansible.netcommon.cli_command:
+      command: "{{ item }}"
+      #prompt: "OK to proceed"  # not needed with write mem and reboot after
+      #answer: "y"
+    loop:
+      - "write mem"
+      - "reboot after 3"    
+    changed_when: True  
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: reset the connection
+    meta: reset_connection
+
+  - name: Wait for the network device to reload
+    wait_for_connection:
+      delay: 10
+      sleep: 10
+      timeout: "{{ timeout_wait_for_reboot }}"
+      connect_timeout: 30
+
+  # get facts again and confirm correct upgrade
+  - name: get device info and store in "os_facts"
+    device_info:
+    register: output_post_install
+    retries: 2
+    delay: 5
+    until: output_post_install is not failed
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: verify if OS is upgraded after reboot
+    ansible.builtin.assert:
+      that:
+        - "'{{ output_post_install.output.network_os_software_version }}' == '{{ os_required_version }}'"
+      success_msg: "OK: upgrade done successfully! Running OS = {{ output_post_install.output.network_os_software_version }}"
+      fail_msg: "ERROR: UPGRADE FAILED - REQUIRED OS IS NOT RUNNING AFTER REBOOT: running={{ output_post_install.output.network_os_software_version }} required={{ os_required_version }}"
+
+  when: dryrun is false and reboot is true
+

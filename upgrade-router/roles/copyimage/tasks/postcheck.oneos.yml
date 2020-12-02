@@ -1,0 +1,21 @@
+---
+
+
+### BLOCK: VERIFY THAT THE DESTINATION FILE IS CORRECT UNLESS THE FILE IS PRESENT IN ALTERNATE BANK
+- block:
+
+  - name: Verify the destination file
+    ansible.netcommon.cli_command:
+      command: "show soft-file info {{ os_destination_folder }}/{{ os_required_file }}"
+    register: output
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: assert that the image is correct
+    ansible.builtin.assert:
+      that:
+        - "'file is OK'.lower() in output.stdout.lower()"
+      success_msg: "OK: valid image file '{{ os_required_file }}'"
+      fail_msg: "ERROR: invalid or corrupt image file '{{ os_required_file }}' - MANUAL ACTION REQUIRED"
+
+  when: verify_file is true

@@ -1,0 +1,7 @@
+---
+
+- block:
+
+  - include: getfacts.oneos.yml
+
+  when: ansible_network_os == "oneos5" or ansible_network_os == "oneos6"

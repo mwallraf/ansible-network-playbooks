@@ -1,0 +1,59 @@
+---
+
+### BLOCK: CHECK IF THE FILE SYSTEM HAS ENOUGH DISK SPACE, ONLY NEEDED IF THE IMAGE IS NOT YET PRESENT
+
+- name: set has_sufficient_diskspace to indicate if the device has enough disk space
+  set_fact:    
+    has_sufficient_diskspace: >-
+      {{ true if os_facts.network_os_diskspace_free_bytes|int > bootfiles_stat[os_required_file].size|int else false }}
+
+
+### REMOVE UNUSED IMAGES IF THERE IS NOT ENOUGH DISK SPACE AND THE OPTION IS ENABLED
+- block:
+
+  #- name: remove unused binary files
+  #  ansible.builtin.debug:
+  #    msg: "rm {{ os_facts.network_os_software_location }}/{{ item['file'] }} -- {{ os_facts.network_os_boot_startup_image|default('_empty_') }}"
+  #    verbosity: 1
+  #  when: "os_facts.network_os_software_version not in item['file'] and item['file'] != os_facts.network_os_boot_startup_image|default('_empty_')"
+  #  loop: "{{ os_facts.network_os_boot_available_files }}"
+  #  vars:
+  #    ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: remove unused binary files
+    ansible.netcommon.cli_command:
+      command: "rm {{ os_facts.network_os_software_location }}/{{ item['file'] }}"
+    when: "bootfile_exists_alternative_bank is true or ( os_facts.network_os_software_version not in item['file'] and item['file'] != os_facts.network_os_boot_startup_image|default('_empty_') )"
+    loop: "{{ os_facts.network_os_boot_available_files }}"
+    changed_when: True
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  # TODO: REPLACE THIS BY JUST CHECKING THE CURRENT DISK SPACE
+  - name: get device info and store in "os_facts" after removing the images
+    device_info:
+    register: output
+    retries: 2
+    delay: 5
+    until: output is not failed
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - set_fact:
+      os_facts: "{{ output.output }}"
+
+  - name: set has_sufficient_diskspace to indicate if the device has enough disk space
+    set_fact:    
+      has_sufficient_diskspace: >-
+        {{ true if os_facts.network_os_diskspace_free_bytes|int > bootfiles_stat[os_required_file].size|int else false }}
+
+  when: has_sufficient_diskspace is false and remove_unused_images_if_needed is true and os_facts.network_os_boot_available_files|length > 0
+  
+
+# ASSERT DISK SPACE REQUIREMENT
+- name: assert that there is enough disk space
+  ansible.builtin.assert:
+    that:
+      - has_sufficient_diskspace is true
+    success_msg: "there is enough disk space free"
+    fail_msg: "there is not enough disk space"

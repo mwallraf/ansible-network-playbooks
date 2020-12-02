@@ -1,0 +1,60 @@
+---
+
+# "os_facts": {
+#     "network_os": "OneOS",
+#     "network_os_boot_available_files": [
+#         {
+#             "file": "test1.ZZZ",
+#             "size": "12812461"
+#         },
+#         {
+#             "file": "ONEOS92-MULTI_FT-V5.2R1E6_FT1.ZZZ",
+#             "size": "12812461"
+#         }
+#     ],
+#     "network_os_boot_startup_image": "/BSA/binaries/OneOs",
+#     "network_os_boot_version": "BOOT92-SEC-V5.2R2E16",
+#     "network_os_diskspace_free_bytes": "190799872",
+#     "network_os_hostname": "vxTarget",
+#     "network_os_license_token": "None",
+#     "network_os_platform": "LBB_320",
+#     "network_os_serial_number": "T1442006907002084",
+#     "network_os_software_version": "ONEOS92-MULTI_FT-V5.2R1E6_FT1",
+#     "network_os_startup_config": "/BSA/config/bsaStart.cfg",
+#     "network_os_system_restart_cause": "Software requested / Administrator requested reboot",
+#     "network_os_system_started": "01/01/00 00:00:00",
+#     "network_os_system_uptime": "2d 3h 51m 21s",
+#     "network_os_system_uptime_secs": "9334109",
+#     "network_os_vendor": "ekinops",
+#     "network_os_vendor_alt": "oneaccess",
+#     "network_os_version": "5"
+# }
+- name: get device info and store in "os_facts"
+  device_info:
+  register: output
+  retries: 2
+  delay: 5
+  until: output is not failed
+  vars:
+    ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+- set_fact:
+    os_facts: "{{ output.output }}"
+
+- set_fact:
+    os_required_version: "{{ supported_os_versions[os_facts.network_os_platform].required_version }}"
+    os_required_file: "{{ supported_os_versions[os_facts.network_os_platform].required_file }}"
+    os_destination_folder: "{{ os_facts.network_os_software_location }}"
+    os_backup_file: "{{ os_facts.network_os_boot_startup_image }}.{{ date_today }}"
+
+- name: "Display var: os_facts"
+  ansible.builtin.debug:
+    msg: "{{ item }}"
+    verbosity: 3
+  loop:
+    - "os_facts : {{ os_facts }}"
+    - "os_required_version: {{ os_required_version }}"
+    - "os_required_file: {{ os_required_file }}"
+    - "os_destination_folder: {{ os_destination_folder }}"
+    - "os_backup_file: {{ os_backup_file }}"
+

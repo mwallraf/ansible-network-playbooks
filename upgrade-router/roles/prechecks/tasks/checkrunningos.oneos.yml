@@ -1,0 +1,12 @@
+---
+
+### BLOCK: CHECK RUNNING SOFTWARE - EXIT IF ALREADY UP TO DATE
+- block:
+
+  - name: if the router is already running the correct OS then log and exit
+    set_fact:
+      status_msg: "{{ os_facts.network_os_hostname }}: no upgrade done, already has the correct software"
+
+  - meta: end_host
+
+  when: os_facts.network_os_software_version == os_required_version

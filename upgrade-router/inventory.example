@@ -1,0 +1,38 @@
+[all:vars]
+# these defaults can be overridden for any group in the [group:vars] section
+ansible_connection=ansible.netcommon.network_cli
+# this is the local system user
+ansible_user=<user of the system where ansible is installed>
+host_key_checking = False
+ansible_paramiko_host_key_checking = False
+paramiko_host_key_checking = False
+## network connection parameters:
+ansible_become=no
+ansible_become_method=enable
+ansible_user=<user connecting to the network device>
+ansible_password=<password connecting to the network device>
+
+
+
+######### LOCAL LAB #########
+
+[local_lab_oneos5]
+oneos5-local-cpe ansible_host=192.168.1.10
+
+[local_lab_oneos5:vars]
+ansible_network_os=oneos5
+
+[local_lab_oneos6]
+oneos6-local-cpe ansible_host=192.168.1.100 
+
+[local_lab_oneos6:vars]
+ansible_network_os=oneos6
+
+
+######### GROUPS #########
+[local_lab:children]
+local_lab_oneos5
+local_lab_oneos6
+
+
+

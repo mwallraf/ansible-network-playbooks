@@ -1,0 +1,11 @@
+---
+
+- block:
+
+  - include: copyfile.oneos.yml
+    when: bootfile_exists is false and bootfile_exists_alternative_bank is false
+
+  - include: postcheck.oneos.yml
+    when: bootfile_exists_alternative_bank is false
+
+  when: ansible_network_os == "oneos5" or ansible_network_os == "oneos6"

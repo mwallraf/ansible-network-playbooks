@@ -1,0 +1,18 @@
+---
+
+### BLOCK: CHECK DISK SPACE AND COPY THE IMAGE 
+###        DO NOT COPY IF THE FILE ALREADY EXISTS ON DISK OR ALTERNATE BANK
+- block:
+  
+  # COPY FILE IF NEEDED - wait max 10 minutes
+  - name: copy file from ansible controller to a network device
+    ansible.netcommon.net_put:
+      src: "{{ images_folder }}{{ os_required_file }}"
+      dest: "{{ os_destination_folder }}/{{ os_required_file }}"
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_copy }}"
+    when: dryrun is false
+    changed_when: dryrun is false
+
+  when: upload_file is true
+

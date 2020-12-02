@@ -1,0 +1,29 @@
+---
+
+
+### BLOCK: CHECK IF THE EXISTING FILE IS VALID, REMOVE IF INVALID
+- block:
+
+  - name: Verify the existing file
+    ansible.netcommon.cli_command:
+      command: "show soft-file info {{ os_destination_folder }}/{{ os_required_file }}"
+    register: output
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: remove the file if it seems to be corrupt or if it's not the required version
+    ansible.netcommon.cli_command:
+      command: "rm {{ os_destination_folder }}/{{ os_required_file }}"
+    when: "'file is OK'.lower() not in output.stdout.lower() or os_required_file not in output.stdout"
+    changed_when: "'file is OK'.lower() not in output.stdout.lower() or os_required_file not in output.stdout"
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: set bootfile_exists again if the file check was not ok
+    set_fact:
+      bootfile_exists: false
+    when: "'file is OK'.lower() not in output.stdout.lower()"
+
+  when: bootfile_exists is true
+
+

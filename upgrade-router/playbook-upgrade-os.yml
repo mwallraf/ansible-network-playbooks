@@ -1,0 +1,106 @@
+- name: "Upgrade OneAccess routers"
+
+  hosts: prod_customer_cpe
+  gather_facts: no
+  #strategy: free  # issues with run_once in the pre_tasks
+  debugger: never #on_failed
+
+  vars:
+    timeout_wait_for_command: 300
+    timeout_wait_for_install: 300
+    timeout_wait_for_copy: 900
+    timeout_wait_for_reboot: 600
+
+    remove_unused_images_if_needed: true  # if enabled and there are disk space issues then remove all binaries which are not in use
+    copy_files: true   # if false then the file is never copied
+    # DRYRUN MODE:
+    #   - no changes are made
+    #   - files are NOT copied (unless )
+    dryrun: false       # if true then the boot image files are not changed, nothing is 
+    verify_file: true  # check md5 or filesize if defined  
+    upload_file: true
+    reboot: true
+
+
+
+  pre_tasks:
+
+    ### BLOCK: INITIALIZE IMAGE FILE STATS
+    - block:
+
+      - name: Get stats of the image files
+        ansible.builtin.stat:
+          path: "{{ images_folder }}{{ supported_os_versions[item].required_file }}"
+          get_md5: true
+          get_checksum: true
+        loop: "{{ supported_os_versions | list }}"
+        register: output
+
+      - set_fact:
+          bootfiles_stat: {}
+
+      # "bootfiles_stat": {
+      #     "ONEOS9-MONO_FT-V5.2R2E7_HA5.ZZZ": {
+      #         "checksum": "",
+      #         "md5": "",
+      #         "size": 0
+      #     },
+      #     "ONEOS92-MULTI_FT-V5.2R1E6_FT1.ZZZ": {
+      #         "checksum": "434ff734e2f39b50733f590458de497dbb57775a",
+      #         "md5": "2c6a401cb568411b98f0b008f28fadc5",
+      #         "size": 12812461
+      #     },
+      #     "OneOS-pCPE-PPC_pi2-6.4.2m1.ZZZ": {
+      #         "checksum": "",
+      #         "md5": "",
+      #         "size": 0
+      #     }
+      # }        
+      - name: set bootfiles_stat facts, include filesize, md5
+        set_fact:
+          bootfiles_stat: >-
+            {% if item.stat.exists -%}
+              {% set size = item.stat.size -%}
+              {% set checksum = item.stat.checksum -%}
+              {% set md5 = item.stat.md5 -%}
+            {% else -%}
+              {% set size = 0 -%}
+              {% set checksum = "" -%}
+              {% set md5 = "" -%}
+            {% endif -%}
+            {{ bootfiles_stat | combine({ item.invocation.module_args.path | basename: { "size": size, "checksum": checksum, "md5": md5 } }) }}
+        loop: "{{ output.results }}"
+
+      - set_fact:
+          date_today: "{{ lookup('pipe','date +%Y%m%d') }}"
+
+      - name: "Display var: bootfiles_stat"
+        ansible.builtin.debug:
+          msg: "{{ bootfiles_stat }}"
+          verbosity: 1
+
+      # for debugging only
+      #- meta: end_host
+
+      run_once: true
+      delegate_to: localhost
+
+  roles:
+     - getfacts
+     - prechecks
+     - copyimage
+     - installimage
+     - reboot
+
+
+
+  #tasks:
+    #- meta: end_host
+
+
+
+
+
+        
+
+

@@ -1,0 +1,75 @@
+### BLOCK: INSTALL THE IMAGE IN THE ALTERNATE BANK AND SWITCH TO ALTERNATE
+
+# lab-lbb150#software-image install OneOS-pCPE-ARM_pi1-6.2.2.ZZZ alternate no-confirm
+# Getting software information...
+# Binary file information :
+#   file type              = OneOs ZZZ
+#   software version       = OneOS-pCPE-ARM_pi1-6.2.2
+#   software creation date = 2019-06-07 15:45:09
+#   header checksum        = 0x73FC0CF9
+#   target device          = pCPE_ARM_pi1
+# ----- Extended Flash Binary -----
+#   --- Section 0 : OS / 4864 ko
+#   --- Section 1 : ROOTFS / 77692 ko
+# Getting software...
+# Checking software...
+# Checking update signature...
+# Flashing alternate partition...
+# Checking flash content...
+# Checking flash content : OK
+# Software has been installed in alternate bank.
+# lab-lbb150#
+
+# lab-lbb150#software-image revert keep
+# Checking alternate partition...
+#
+# Active version will be : OneOS-pCPE-ARM_pi1-6.2.2
+# Alternate version will be : OneOS-pCPE-ARM_pi1-6.3.1m1
+#
+# OK to proceed ? [y/n]
+# y
+# Reverting to alternate bank...
+# New active software will be started on next reboot.
+# lab-lbb150#
+
+### INSTALL THE IMAGE UNLESS IT'S ALREADY PRESENT
+- block:
+
+  - name: Install image in alternate bank
+    ansible.netcommon.cli_command:
+      command: "software-image install {{ os_destination_folder }}/{{ os_required_file }} alternate no-confirm"
+    register: output
+    changed_when: true
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_install }}"
+
+  - name: Assert that the install was successful
+    ansible.builtin.assert:
+      that: "'Software has been installed in alternate bank'.lower() in output.stdout.lower()"
+      success_msg: "Software has been installed in alternate bank"
+      fail_msg: "Software installation to alternate bank has failed!"
+
+  when: dryrun is false and bootfile_exists_alternative_bank is false
+
+
+### SWITCH SOFTWARE BANKS
+- block:
+
+  - name: Switch alternate bank to primary
+    ansible.netcommon.cli_command:
+      command: "software-image revert keep"
+      prompt: "OK to proceed"
+      answer: "y"
+    register: output
+    changed_when: true
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_install }}"
+
+  - name: Assert that the software bank switch was successful
+    ansible.builtin.assert:
+      that: "'New active software will be started on next reboot'.lower() in output.stdout.lower()"
+      success_msg: "Software banks have been switched"
+      fail_msg: "Software bank switch has failed!"
+
+  when: dryrun is false
+

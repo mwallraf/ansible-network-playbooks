@@ -1,0 +1,44 @@
+---
+
+### BLOCK: ENABLE THE NEW IMAGE FILE IF DRYRUN IS FALSE
+
+# remove os_backup_file if it exists
+# move os_facts.network_os_boot_startup_image => os_backup_file
+# move {{ os_destination_folder }}/{{ os_required_file }} => os_facts.network_os_boot_startup_image
+# verify os_facts.network_os_boot_startup_image and make sure that:
+#    software version = os_required_version
+- block:
+
+  - name: Remove the backup file - if it exists
+    ansible.netcommon.cli_command:
+      command: "rm {{ os_backup_file }}"
+    when: os_backup_file in bootfiles_stat
+    changed_when: os_backup_file in bootfiles_stat
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  - name: Replace running boot file with new boot file
+    ansible.netcommon.cli_command:
+      command: "{{ item }}"
+    loop:
+      - "mv {{ os_facts.network_os_boot_startup_image }} {{ os_backup_file }}"
+      - "mv {{ os_destination_folder }}/{{ os_required_file }} {{ os_facts.network_os_boot_startup_image }}"
+    changed_when: true
+    vars:
+      ansible_command_timeout: "{{ timeout_wait_for_command }}"
+
+  # already done in copyimage role
+  # - name: Verify the destination file
+  #   ansible.netcommon.cli_command:
+  #     command: "show soft-file info {{ os_facts.network_os_boot_startup_image }}"
+  #   register: output
+
+  # - name: assert that the image is indeed the new version
+  #   ansible.builtin.assert:
+  #     that:
+  #       - "'{{ os_required_version }}' in output.stdout"
+  #     success_msg: "OK: the new image has been installed correctly - reboot required to activate"
+  #     fail_msg: "ERROR: the new image has not been installed correctly - MANUAL INTERVENTION REQUIRED BEFORE REBOOT"
+
+  when: dryrun is false
+

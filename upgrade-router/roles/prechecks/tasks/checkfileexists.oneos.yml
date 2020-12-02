@@ -1,0 +1,17 @@
+---
+
+### BLOCK: CHECK IF FILE ALREADY EXISTS ON THE DISK OF THE DEVICE
+- name: set bootfile_exists if the file exists on the disk
+  set_fact:
+    bootfile_exists: >-
+      {{ true if (os_facts.network_os_boot_available_files | selectattr("file", "equalto", os_required_file) | list) else false }}
+
+- name: set bootfile_exists_alternative_bank if the file exists on the alternative disk - if applicable
+  set_fact:
+    bootfile_exists_alternative_bank: >-
+      {{ true if "network_os_software_bank_alternate" in os_facts and os_facts.network_os_software_bank_alternate == os_required_version else false }}
+      
+- ansible.builtin.debug:
+    msg: "Required file already present on the device:{{ bootfile_exists }} or alternate bank:{{ bootfile_exists_alternative_bank }}"
+    verbosity: 1
+
