@@ -1,8 +1,6 @@
 [all:vars]
 # these defaults can be overridden for any group in the [group:vars] section
 ansible_connection=ansible.netcommon.network_cli
-# this is the local system user
-ansible_user=<user of the system where ansible is installed>
 host_key_checking = False
 ansible_paramiko_host_key_checking = False
 paramiko_host_key_checking = False
